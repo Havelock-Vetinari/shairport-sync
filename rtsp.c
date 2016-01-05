@@ -584,7 +584,7 @@ static void msg_write_response(int fd, rtsp_message *resp) {
 }
 
 static void handle_record(rtsp_conn_info *conn, rtsp_message *req, rtsp_message *resp) {
-  //debug(1,"Handle Record");
+  debug(2,"Handle Record");
   resp->respcode = 200;
    // I think this is for telling the client what the absolute minimum latency actually is,
    // and when the client specifies a latency, it should be added to this figure.
@@ -607,7 +607,7 @@ static void handle_record(rtsp_conn_info *conn, rtsp_message *req, rtsp_message 
       if (p) {
         rtptime = uatoi(p+1); // unsigned integer -- up to 2^32-1
 				rtptime--;
-				// debug(1,"RTSP Flush Requested by handle_record: %u.",rtptime);
+				debug(1,"RTSP Flush Requested by handle_record: %u.",rtptime);
 				player_flush(rtptime);
       }
     }
@@ -615,6 +615,7 @@ static void handle_record(rtsp_conn_info *conn, rtsp_message *req, rtsp_message 
 }
 
 static void handle_options(rtsp_conn_info *conn, rtsp_message *req, rtsp_message *resp) {
+  debug(2,"Handle Options");
   resp->respcode = 200;
   msg_add_header(resp, "Public", "ANNOUNCE, SETUP, RECORD, "
                                  "PAUSE, FLUSH, TEARDOWN, "
@@ -622,6 +623,7 @@ static void handle_options(rtsp_conn_info *conn, rtsp_message *req, rtsp_message
 }
 
 static void handle_teardown(rtsp_conn_info *conn, rtsp_message *req, rtsp_message *resp) {
+  debug(2,"Handle Teardown");
   if (!rtsp_playing())
     return;
   resp->respcode = 200;
@@ -630,8 +632,11 @@ static void handle_teardown(rtsp_conn_info *conn, rtsp_message *req, rtsp_messag
 }
 
 static void handle_flush(rtsp_conn_info *conn, rtsp_message *req, rtsp_message *resp) {
-  if (!rtsp_playing())
+  debug(2,"Handle Flush");
+  if (!rtsp_playing()) {
+    debug(2,"Ignoring Handle Flush because not playing");
     return;
+  }
   char *p;
   uint32_t rtptime = 0;
   char *hdr = msg_get_header(req, "RTP-Info");
@@ -652,6 +657,7 @@ static void handle_flush(rtsp_conn_info *conn, rtsp_message *req, rtsp_message *
 }
 
 static void handle_setup(rtsp_conn_info *conn, rtsp_message *req, rtsp_message *resp) {
+  debug(2,"Handle Setup");
   // debug(1,"Handle Setup");
   int cport, tport;
   int lsport, lcport, ltport;
@@ -787,6 +793,7 @@ error:
 }
 
 static void handle_ignore(rtsp_conn_info *conn, rtsp_message *req, rtsp_message *resp) {
+  debug(2,"Handle Ignore");
   resp->respcode = 200;
 }
 
@@ -1117,6 +1124,7 @@ static void handle_get_parameter(rtsp_conn_info *conn, rtsp_message *req, rtsp_m
 
 
 static void handle_set_parameter(rtsp_conn_info *conn, rtsp_message *req, rtsp_message *resp) {
+  debug(2,"Handle Set Parameter");
   // if (!req->contentlength)
   //    debug(1, "received empty SET_PARAMETER request.");
 
@@ -1201,6 +1209,7 @@ static void handle_set_parameter(rtsp_conn_info *conn, rtsp_message *req, rtsp_m
 }
 
 static void handle_announce(rtsp_conn_info *conn, rtsp_message *req, rtsp_message *resp) {
+    debug(2,"Handle Announce");
   // interrupt session if permitted
   if ((config.allow_session_interruption == 1) || (pthread_mutex_trylock(&play_lock) == 0)) {
     resp->respcode = 456; // 456 - Header Field Not Valid for Resource

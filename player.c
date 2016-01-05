@@ -303,8 +303,8 @@ void player_put_packet(seq_t seqno, uint32_t timestamp, uint8_t *data, int len) 
   time_of_last_audio_packet = get_absolute_time_in_fp();
   if (connection_state_to_output) { // if we are supposed to be processing these packets
 
-//    if (flush_rtp_timestamp != 0)
-//    	debug(1,"Flush_rtp_timestamp is %u",flush_rtp_timestamp);
+    if (flush_rtp_timestamp != 0)
+    	debug(1,"in player_put_packet, flush_rtp_timestamp is %u",flush_rtp_timestamp);
 
     if ((flush_rtp_timestamp != 0) &&
         ((timestamp == flush_rtp_timestamp) || seq32_order(timestamp, flush_rtp_timestamp))) {
@@ -320,7 +320,7 @@ void player_put_packet(seq_t seqno, uint32_t timestamp, uint8_t *data, int len) 
       abuf_t *abuf = 0;
 
       if (!ab_synced) {
-        debug(2, "syncing to seqno %u.", seqno);
+        debug(3, "syncing to seqno %u.", seqno);
         ab_write = seqno;
         ab_read = seqno;
         ab_synced = 1;
@@ -504,8 +504,10 @@ static abuf_t *buffer_get_frame(void) {
           }
           if ((flush_rtp_timestamp != 0) &&
               (!seq32_order(curframe->timestamp,
-                            flush_rtp_timestamp))) // if we have gone past the flush boundary time
+                            flush_rtp_timestamp))) { // if we have gone past the flush boundary time
+            debug(2,"Flush timestamp %u passed by current frame timestamp %u");
             flush_rtp_timestamp = 0;
+          }
         }
       } while ((flush_rtp_timestamp != 0) && (flush_limit <= 8820) && (curframe->ready == 0));
 
@@ -1377,7 +1379,7 @@ void player_volume(double airplay_volume) {
 }
 
 void player_flush(uint32_t timestamp) {
-  // debug(1,"Flush requested up to %u. It seems as if 0 is special.",timestamp);
+  debug(1,"Flush requested up to %u. It seems as if 0 is special.",timestamp);
   pthread_mutex_lock(&flush_mutex);
   flush_requested = 1;
   // if (timestamp!=0)
